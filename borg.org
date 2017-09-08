@@ -209,21 +209,21 @@ Magit status buffer of the ~~/.emacs.d~ repository.
 - Command: borg-build clone &optional activate
 
   This command builds the clone named CLONE.  Interactively, or when
-  optional ACTIVATE is non-nil, then also activate the drone using
+  optional ACTIVATE is non-nil, also activate the clone using
   ~borg-activate~.
 
 - Function: borg-update-autoloads clone &optional path
 
   This function updates the autoload file for the libraries belonging
   to the clone named CLONE in the directories in PATH.  PATH can be
-  omitted or contain file-names that are relative to the top-level of
+  omitted or contain file names that are relative to the top level of
   CLONE's repository.
 
 - Function: borg-byte-compile clone &optional path
 
   This function compiles the libraries for the clone named CLONE in
-  the directories in PATH.  PATH can be omitted or contain file-names
-  that are relative to the top-level of CLONE's repository.
+  the directories in PATH.  PATH can be omitted or contain file names
+  that are relative to the top level of CLONE's repository.
 
 - Function: borg-makeinfo clone
 
@@ -510,7 +510,7 @@ variables you can tell Borg how to build such packages.
   This variable instructs ~borg-activate~ to add PATH to the ~load-path~
   instead of the directory it would otherwise have added.  Likewise it
   instructs ~borg-byte-compile~ to compile the libraries in that
-  directory.  PATH has to be relative to the top-level of the
+  directory.  PATH has to be relative to the top level of the
   repository of the drone named DRONE.  This variable can be specified
   multiple times.
 
@@ -533,7 +533,7 @@ variables you can tell Borg how to build such packages.
 - Variable: submodule.DRONE.no-byte-compile PATH
 
   This variable instructs ~borg-byte-compile~ to not compile the library
-  at PATH.  PATH has to be relative to the top-level of the repository
+  at PATH.  PATH has to be relative to the top level of the repository
   of the drone named DRONE.  This variable can be specified multiple
   times.
 
@@ -551,13 +551,13 @@ variables you can tell Borg how to build such packages.
 - Variable: submodule.DRONE.info-path PATH
 
   This variable instructs ~borg-initialize~ to add PATH to
-  ~Info-directory-list~.  PATH has to be relative to the top-level of
+  ~Info-directory-list~.  PATH has to be relative to the top level of
   the repository of the drone named DRONE.
 
 - Variable: submodule.DRONE.no-makeinfo PATH
 
   This variable instructs ~borg-makeinfo~ to not create an Info file for
-  the Texinfo file at PATH.  PATH has to be relative to the top-level
+  the Texinfo file at PATH.  PATH has to be relative to the top level
   of the repository of the drone named DRONE.  This variable can be
   specified multiple times.
 
@@ -574,7 +574,7 @@ build your own tools on top of Borg.
 
 - Function: borg-worktree clone
 
-  This function returns the top-level of the working tree of the
+  This function returns the top level of the working tree of the
   clone named CLONE.
 
 - Function: borg-gitdir clone
