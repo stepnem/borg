@@ -282,21 +282,18 @@ Add the appropriate directories to `load-path' and
 if it exists."
   (interactive (list (borg-read-clone "Activate clone: ")))
   (dolist (dir (borg-load-path clone))
-    (let (file)
-      (cond ((and (file-exists-p
-                   (setq file (expand-file-name
-                               (concat clone "-autoloads.el") dir)))
-                  (with-demoted-errors "Error loading autoloads: %s"
-                    (load file nil t))))
-            ((and (file-exists-p
-                   (setq file (expand-file-name
-                               (concat clone "-loaddefs.el") dir)))
-                  (with-demoted-errors "Error loading autoloads: %s"
-                    (add-to-list 'load-path dir) ; for `org'
-                    (load file nil t))))
-            (t (push dir load-path)))))
+    (add-to-list 'load-path dir)
+    (let* (file
+           (test (lambda (suffix)
+                   (file-exists-p
+                    (setq file (expand-file-name
+                                (concat clone suffix) dir))))))
+      (when (or (funcall test "-autoloads.el")
+                (funcall test "-loaddefs.el")) ; e.g. org
+        (with-demoted-errors "Error loading autoloads: %s"
+          (load file nil t)))))
   (dolist (dir (borg-info-path clone))
-    (push  dir Info-directory-list)))
+    (add-to-list 'Info-directory-list dir)))
 
 (defun borg-batch-rebuild (&optional quick)
   "Rebuild all assimilated drones.
@@ -395,27 +392,10 @@ also activate the clone using `borg-activate'."
   (when activate
     (borg-activate clone)))
 
-(defconst borg-autoload-format "\
-;;;\
- %s --- automatically extracted autoloads
-;;
-;;;\
- Code:
-\(add-to-list 'load-path (directory-file-name \
-\(or (file-name-directory #$) (car load-path))))
-\
-;; Local Variables:
-;; version-control: never
-;; no-byte-compile: t
-;; no-update-autoloads: t
-;; End:
-;;;\
- %s ends here\n")
-
 (defun borg-update-autoloads (clone &optional path)
   "Update autoload files for the clone named CLONE in the directories in PATH."
   (setq path (borg--expand-load-path clone path))
-  (let ((autoload-excludes
+    (let ((autoload-excludes
          (nconc (mapcar #'expand-file-name
                         (borg-get-all clone "no-byte-compile"))
                 (cl-mapcan
@@ -432,10 +412,7 @@ also activate the clone using `borg-activate'."
       (delete-file generated-autoload-file t))
     (let* ((backup-inhibited t)
            (version-control 'never)
-           (noninteractive t)
-           (filename (file-name-nondirectory generated-autoload-file)))
-      (write-region (format borg-autoload-format filename filename)
-                    nil generated-autoload-file nil 'silent)
+           (noninteractive t))
       (apply #'update-directory-autoloads path))
     (let ((buf (find-buffer-visiting generated-autoload-file)))
       (when buf
