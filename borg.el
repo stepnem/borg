@@ -301,14 +301,14 @@ if it exists."
 (defun borg-batch-rebuild (&optional quick)
   "Rebuild all assimilated drones.
 
-Drones are rebuild in alphabetic order, except that Org is build
-first.  `init.el' and `USER-REAL-LOGIN-NAME.el' are also rebuild.
+Drones are rebuilt in alphabetic order, except that Org is built
+first.  `init.el' and `USER-REAL-LOGIN-NAME.el' are also rebuilt.
 
 This function is to be used only with `--batch'.
 
 When optional QUICK is non-nil, then do not build drones for
 which `submodule.DRONE.build-step' is set, assuming those are the
-drones that take longer to be build."
+drones that take longer to be built."
   (unless noninteractive
     (error "borg-batch-rebuild is to be used only with --batch"))
   (let ((drones (borg-drones)))
