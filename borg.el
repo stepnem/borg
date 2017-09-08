@@ -350,7 +350,7 @@ This function is to be used only with `--batch'."
 (defun borg-build (clone &optional activate)
   "Build the clone named CLONE.
 Interactively, or when optional ACTIVATE is non-nil,
-then also activate the clone using `borg-activate'."
+also activate the clone using `borg-activate'."
   (interactive (list (borg-read-clone "Build drone: ") t))
   (if noninteractive
       (let ((default-directory (borg-worktree clone))
