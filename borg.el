@@ -471,12 +471,10 @@ Interactively, or when optional ACTIVATE is non-nil,
 then also activate the clone using `borg-activate'."
   (interactive (list (borg-read-clone "Build drone: ") t))
   (if noninteractive
-      (borg--build-noninteractive clone)
-    (borg--build-interactive clone))
-  (when activate
-    (borg-activate clone)))
+      (borg--build-noninteractive clone activate)
+    (borg--build-interactive clone activate)))
 
-(defun borg--build-noninteractive (clone)
+(defun borg--build-noninteractive (clone &optional activate)
   (let ((default-directory (borg-worktree clone))
         (build-cmd (if (functionp borg-build-shell-command)
                        (funcall borg-build-shell-command clone)
@@ -505,9 +503,11 @@ then also activate the clone using `borg-activate'."
       (let ((path (mapcar #'file-name-as-directory (borg-load-path clone))))
         (borg-update-autoloads clone path)
         (borg-byte-compile clone path)
-        (borg-makeinfo clone)))))
+        (borg-makeinfo clone))
+      (when activate
+        (borg-activate clone)))))
 
-(defun borg--build-interactive (clone)
+(defun borg--build-interactive (clone &optional activate)
   (save-some-buffers
    nil (let ((top default-directory))
          (lambda ()
@@ -534,15 +534,15 @@ then also activate the clone using `borg-activate'."
         (insert (format "\n(%s) Building %s\n\n"
                         (format-time-string "%H:%M:%S")
                         clone))))
-    (set-process-filter
-     (apply #'start-process
-            (format "emacs ... --eval (borg-build %S)" clone)
-            buffer
-            (expand-file-name invocation-name invocation-directory)
-            `("--batch" ,@borg-emacs-arguments
-              "-L" ,(file-name-directory (locate-library "borg"))
-              "--eval" ,(if (featurep 'borg-elpa)
-                            (format "(progn
+    (let ((proc (make-process
+                 :name (format "emacs ... --eval (borg-build %S)" clone)
+                 :buffer buffer
+                 :command
+                 `(,(expand-file-name invocation-name invocation-directory)
+                   "--batch" ,@borg-emacs-arguments
+                   "-L" ,(file-name-directory (locate-library "borg"))
+                   "--eval" ,(if (featurep 'borg-elpa)
+                                 (format "(progn
   (setq user-emacs-directory %S)
   (require 'package)
   (package-initialize 'no-activate)
@@ -551,12 +551,22 @@ then also activate the clone using `borg-activate'."
   (borg-elpa-initialize)
   (setq borg-build-shell-command (quote %S))
   (borg-build %S))" user-emacs-directory borg-build-shell-command clone)
-                          (format "(progn
+                               (format "(progn
   (require 'borg)
   (borg-initialize)
   (setq borg-build-shell-command (quote %S))
-  (borg-build %S))" borg-build-shell-command clone))))
-     'borg-build--process-filter)))
+  (borg-build %S))" borg-build-shell-command clone)))
+                 :filter #'borg-build--process-filter)))
+      (when activate
+        (defalias 'borg-build--activate
+            (lambda (process _message)
+              (and (eq (process-status process) 'exit)
+                   (eq (process-exit-status process) 0)
+                   (borg-activate clone)))
+          (format "Activate drone `%s' after its build completes with success."
+                  clone))
+        (declare-function borg-build--activate "borg") ; silence the compiler
+        (add-function :after (process-sentinel proc) #'borg-build--activate)))))
 
 (defun borg-build--process-filter (process string)
   (when (buffer-live-p (process-buffer process))
@@ -748,8 +758,7 @@ build and activate the drone."
     (borg--call-git package "add" ".gitmodules")
     (borg--maybe-absorb-gitdir package))
   (unless partially
-    (borg-build package)
-    (borg-activate package))
+    (borg-build package t))
   (borg--refresh-magit)
   (message "Assimilating %s...done" package))
 
