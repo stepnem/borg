@@ -874,9 +874,11 @@ Formatting is according to the commit message conventions."
 
 (defun borg--maybe-absorb-gitdir (pkg)
   (let ((ver (nth 2 (split-string (car (process-lines "git" "version")) " "))))
-    (when (string-match "\\.windows\\.[0-9]+\\'" ver)
-      (setq ver (substring ver 0 (match-beginning 0))))
-    (if (version< ver "2.12.0")
+    (if (version<
+         ;; strip suffixes like ".g991a26804f1e" or ".windows.someversion"
+         ;; that cause `version-to-list' to error out
+         (string-trim-right ver "\\.[gw].+\\'")
+         "2.12.0")
         (let ((gitdir (borg-gitdir pkg))
               (topdir (borg-worktree pkg)))
           (unless (equal (let ((default-directory topdir))
